@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Дневник учителя</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        .nav-tabs .nav-link.active {
+            font-weight: 600;
+            background-color: #f8f9fa;
+            border-bottom: 3px solid #0d6efd;
+        }
+        .header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .table thead th {
+            background-color: #f1f5fd;
+            position: sticky;
+            top: 0;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        .completed-topic {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        .grade-badge {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 10px;
+            margin-right: 5px;
+        }
+        /* Стили для тестов */
+        .test-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #6a11cb;
+        }
+        .test-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .question-item {
+            border-left: 3px solid #2575fc;
+            padding-left: 15px;
+            margin-bottom: 20px;
+        }
+        .answer-item {
+            padding: 8px 15px;
+            margin: 5px 0;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .answer-item:hover {
+            background-color: #e9ecef;
+        }
+        .correct-answer {
+            background-color: #d4edda;
+            border-left: 3px solid #28a745;
+        }
+        .incorrect-answer {
+            background-color: #f8d7da;
+            border-left: 3px solid #dc3545;
+        }
+        .selected-answer {
+            background-color: #cce5ff;
+            border-left: 3px solid #007bff;
+        }
+        .test-result {
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .success-result {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .warning-result {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .danger-result {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .collection-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .collection-header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Шапка -->
+    <div class="header text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold">Дневник учителя</h1>
+            <p class="lead">Система учета успеваемости учащихся</p>
+        </div>
+    </div>
+
+    <div class="container mb-5 p-4 rounded shadow bg-white">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="mb-3 alert alert-{{ message.tags }} text-center">
+                    {{message}}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Навигационные вкладки -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'students' %}active{% endif %}" id="students-tab" data-bs-toggle="tab" data-bs-target="#students-tab-pane" type="button" role="tab" aria-controls="students-tab-pane" aria-selected="{% if active_tab == 'students' %}true{% else %}false{% endif %}">Учащиеся</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'lessons' %}active{% endif %}" id="lessons-tab" data-bs-toggle="tab" data-bs-target="#lessons-tab-pane" type="button" role="tab" aria-controls="lessons-tab-pane" aria-selected="{% if active_tab == 'lessons' %}true{% else %}false{% endif %}">Уроки</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'grades' %}active{% endif %}" id="grades-tab" data-bs-toggle="tab" data-bs-target="#grades-tab-pane" type="button" role="tab" aria-controls="grades-tab-pane" aria-selected="{% if active_tab == 'grades' %}true{% else %}false{% endif %}">Оценки</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if active_tab == 'tests' %}active{% endif %}" id="tests-tab" data-bs-toggle="tab" data-bs-target="#tests-tab-pane" type="button" role="tab" aria-controls="tests-tab-pane" aria-selected="{% if active_tab == 'tests' %}true{% else %}false{% endif %}">Учебные тесты</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="myTabContent">
+            <!-- Вкладка учащихся -->
+            <div class="tab-pane fade {% if active_tab == 'students' %}show active{% endif %}" id="students-tab-pane" role="tabpanel" aria-labelledby="students-tab" tabindex="0">
+                <div class="d-flex mb-3 justify-content-between align-items-center">
+                    <a href="" data-bs-toggle="modal" data-bs-target="#addnewstudentModal" class="btn btn-primary px-3">
+                        <i class="fas fa-plus me-2"></i>Добавить ученика
+                    </a>
+                    <div>
+                        <form method="post" class="d-flex">
+                            {% csrf_token %}
+                            <input type="hidden" name="active_tab" value="students">
+                            <input type="search" name="query" class="form-control" placeholder="Поиск по имени..." value="{{search_query}}">
+                            <button class="btn btn-success px-3 ms-2" name="search">Найти</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Имя</th>
+                                <th scope="col">Класс</th>
+                                <th scope="col">Телеграм</th>
+                                <th scope="col">Телефон</th>
+                                <th scope="col" width="12%">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>{{student.name}}</td>
+                                <td>{{student.get_student_class_display}}</td>
+                                <td>{{student.telegram|default:"-"}}</td>
+                                <td>{{student.phone|default:"-"}}</td>
+                                <td>
+                                    <div class="d-flex">
+                                        <a href="" data-bs-toggle="modal" data-bs-target="#updatestudentModal_{{student.id}}" class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="far fa-edit"></i>
+                                        </a>
+                                        <a href="" data-bs-toggle="modal" data-bs-target="#deletestudentModal_{{student.id}}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Редактировать ученика -->
+                            <div class="modal fade" id="updatestudentModal_{{student.id}}" tabindex="-1" aria-labelledby="updatestudentModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="active_tab" value="students">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Редактировать ученика</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <input type="hidden" name="id" value="{{student.id}}">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Имя ученика</label>
+                                                    <input type="text" name="name" class="form-control" value="{{student.name}}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Класс</label>
+                                                    <select name="student_class" class="form-select" required>
+                                                        {% for i in "123456789" %}
+                                                        <option value="{{i}}" {% if student.student_class == i|add:0 %}selected{% endif %}>{{i}} класс</option>
+                                                        {% endfor %}
+                                                        <option value="10" {% if student.student_class == 10 %}selected{% endif %}>10 класс</option>
+                                                        <option value="11" {% if student.student_class == 11 %}selected{% endif %}>11 класс</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Telegram</label>
+                                                    <input type="text" name="telegram" class="form-control" value="{{student.telegram|default:''}}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Телефон</label>
+                                                    <input type="text" name="phone" class="form-control" value="{{student.phone|default:''}}">
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                <button type="submit" name="update" class="btn btn-primary">Сохранить</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Удалить ученика -->
+                            <div class="modal fade" id="deletestudentModal_{{student.id}}" tabindex="-1" aria-labelledby="deletestudentModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="active_tab" value="students">
+                                        <input type="hidden" name="id" value="{{student.id}}">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Подтверждение удаления</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Вы уверены, что хотите удалить ученика {{student.name}}? Все связанные уроки и оценки также будут удалены.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                <button type="submit" name="delete" class="btn btn-danger">Удалить</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Вкладка уроков -->
+            <div class="tab-pane fade {% if active_tab == 'lessons' %}show active{% endif %}" id="lessons-tab-pane" role="tabpanel" aria-labelledby="lessons-tab" tabindex="0">
+                <div class="d-flex mb-3 justify-content-between align-items-center">
+                    <a href="" data-bs-toggle="modal" data-bs-target="#addnewlessonModal" class="btn btn-primary px-3">
+                        <i class="fas fa-plus me-2"></i>Добавить урок
+                    </a>
+                    <div>
+                        <form method="post" class="d-flex">
+                            {% csrf_token %}
+                            <input type="hidden" name="active_tab" value="lessons">
+                            <input type="search" name="lesson_query" class="form-control" placeholder="Поиск по имени..." value="{{lesson_search_query}}">
+                            <button class="btn btn-success px-3 ms-2" name="lesson_search">Найти</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Дата урока</th>
+                                <th scope="col">Ученик</th>
+                                <th scope="col">Класс</th>
+                                <th scope="col">План урока</th>
+                                <th scope="col">Домашнее задание</th>
+                                <th scope="col">Комментарий</th>
+                                <th scope="col" width="12%">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lesson in lessons %}
+                            <tr>
+                                <td>{{lesson.date|date:"d.m.Y"}}</td>
+                                <td>{{lesson.student.name}}</td>
+                                <td>{{lesson.student.get_student_class_display}}</td>
+                                <td>{{lesson.plan}}</td>
+                                <td>{{lesson.homework}}</td>
+                                <td>{{lesson.comment}}</td>
+                                <td>
+                                    <div class="d-flex">
+                                        <a href="" data-bs-toggle="modal" data-bs-target="#updatelessonModal_{{lesson.id}}" class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="far fa-edit"></i>
+                                        </a>
+                                        <a href="" data-bs-toggle="modal" data-bs-target="#deletelessonModal_{{lesson.id}}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Редактировать урок -->
+                            <div class="modal fade" id="updatelessonModal_{{lesson.id}}" tabindex="-1" aria-labelledby="updatelessonModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="active_tab" value="lessons">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Редактировать урок</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <input type="hidden" name="lesson_id" value="{{lesson.id}}">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Ученик</label>
+                                                    <select name="student" class="form-select" required>
+                                                        {% for student in students %}
+                                                        <option value="{{student.id}}" {% if student.id == lesson.student.id %}selected{% endif %}>{{student.name}} ({{student.get_student_class_display}})</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Дата урока</label>
+                                                    <input type="date" name="date" class="form-control" value="{{lesson.date|date:'Y-m-d'}}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">План урока</label>
+                                                    <textarea name="plan" class="form-control" rows="3">{{lesson.plan}}</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Домашнее задание</label>
+                                                    <textarea name="homework" class="form-control" rows="3">{{lesson.homework}}</textarea>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Комментарий</label>
+                                                    <textarea name="comment" class="form-control" rows="3">{{lesson.comment}}</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                <button type="submit" name="update_lesson" class="btn btn-primary">Сохранить</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Удалить урок -->
+                            <div class="modal fade" id="deletelessonModal_{{lesson.id}}" tabindex="-1" aria-labelledby="deletelessonModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="active_tab" value="lessons">
+                                        <input type="hidden" name="lesson_id" value="{{lesson.id}}">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Подтверждение удаления</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Вы уверены, что хотите удалить урок от {{lesson.date|date:"d.m.Y"}} для ученика {{lesson.student.name}}?</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                <button type="submit" name="delete_lesson" class="btn btn-danger">Удалить</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Вкладка оценок -->
+            <div class="tab-pane fade {% if active_tab == 'grades' %}show active{% endif %}" id="grades-tab-pane" role="tabpanel" aria-labelledby="grades-tab" tabindex="0">
+                <div class="d-flex mb-3 justify-content-between align-items-center">
+                    <a href="" data-bs-toggle="modal" data-bs-target="#addnewgradeModal" class="btn btn-primary px-3">
+                        <i class="fas fa-plus me-2"></i>Добавить оценку
+                    </a>
+                    <div>
+                        <form method="post" class="d-flex">
+                            {% csrf_token %}
+                            <input type="hidden" name="active_tab" value="grades">
+                            <input type="search" name="grade_query" class="form-control" placeholder="Поиск по имени..." value="{{grade_search_query}}">
+                            <button class="btn btn-success px-3 ms-2" name="grade_search">Найти</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Ученик</th>
+                                <th scope="col">Класс</th>
+                                <th scope="col">Урок</th>
+                                <th scope="col">Оценка</th>
+                                <th scope="col" width="12%">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for grade in grades %}
+                            <tr>
+                                <td>{{grade.student.name}}</td>
+                                <td>{{grade.student.get_student_class_display}}</td>
+                                <td>{{grade.lesson.date|date:"d.m.Y"}}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if grade.score == 5 %}bg-success
+                                        {% elif grade.score == 4 %}bg-primary
+                                        {% elif grade.score == 3 %}bg-info text-dark
+                                        {% elif grade.score == 2 %}bg-warning text-dark
+                                        {% else %}bg-danger
+                                        {% endif %}">
+                                        {{grade.score}}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex">
+                                        <a href="" data-bs-toggle="modal" data-bs-target="#updategradeModal_{{grade.id}}" class="btn btn-sm btn-outline-primary me-2">
+                                            <i class="far fa-edit"></i>
+                                        </a>
+                                        <a href="" data-bs-toggle="modal" data-bs-target="#deletegradeModal_{{grade.id}}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Редактировать оценку -->
+                            <div class="modal fade" id="updategradeModal_{{grade.id}}" tabindex="-1" aria-labelledby="updategradeModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="active_tab" value="grades">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Редактировать оценку</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <input type="hidden" name="grade_id" value="{{grade.id}}">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Ученик</label>
+                                                    <select name="student" class="form-select" required>
+                                                        {% for student in students %}
+                                                        <option value="{{student.id}}" {% if student.id == grade.student.id %}selected{% endif %}>{{student.name}} ({{student.get_student_class_display}})</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Урок</label>
+                                                    <select name="lesson" class="form-select" required>
+                                                        {% for lesson in grade.student.lessons.all %}
+                                                        <option value="{{lesson.id}}" {% if lesson.id == grade.lesson.id %}selected{% endif %}>{{lesson.date|date:"d.m.Y"}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Оценка</label>
+                                                    <select name="score" class="form-select" required>
+                                                        <option value="5" {% if grade.score == 5 %}selected{% endif %}>5 (Отлично)</option>
+                                                        <option value="4" {% if grade.score == 4 %}selected{% endif %}>4 (Хорошо)</option>
+                                                        <option value="3" {% if grade.score == 3 %}selected{% endif %}>3 (Удовлетворительно)</option>
+                                                        <option value="2" {% if grade.score == 2 %}selected{% endif %}>2 (Неудовлетворительно)</option>
+                                                        <option value="1" {% if grade.score == 1 %}selected{% endif %}>1 (Плохо)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                <button type="submit" name="update_grade" class="btn btn-primary">Сохранить</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Удалить оценку -->
+                            <div class="modal fade" id="deletegradeModal_{{grade.id}}" tabindex="-1" aria-labelledby="deletegradeModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="active_tab" value="grades">
+                                        <input type="hidden" name="grade_id" value="{{grade.id}}">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Подтверждение удаления</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Вы уверены, что хотите удалить оценку "{{grade.score}}" за урок от {{grade.lesson.date|date:"d.m.Y"}} для ученика {{grade.student.name}}?</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                <button type="submit" name="delete_grade" class="btn btn-danger">Удалить</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Вкладка тестов -->
+            <div class="tab-pane fade {% if active_tab == 'tests' %}show active{% endif %}" id="tests-tab-pane" role="tabpanel" aria-labelledby="tests-tab" tabindex="0">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Доступные тесты</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- Тест 1 -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="collection-card h-100">
+                                            <div class="collection-header">
+                                                <h5 class="mb-1">Английский: Основы грамматики</h5>
+                                                <p class="small mb-0">3 вопроса</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text">Тест по основам грамматики</p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <span class="badge bg-light text-dark">Английский</span>
+                                                        <span class="badge bg-light text-dark">Начальный уровень</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-white text-center">
+                                                <button class="btn btn-outline-primary take-test" data-test-id="1">
+                                                    <i class="fas fa-play me-1"></i>Начать тест
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Тест 2 -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="collection-card h-100">
+                                            <div class="collection-header">
+                                                <h5 class="mb-1">Английский: Времена</h5>
+                                                <p class="small mb-0">2 вопроса</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text">Тест по временам</p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <span class="badge bg-light text-dark">Английский</span>
+                                                        <span class="badge bg-light text-dark">Начальный уровень</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-white text-center">
+                                                <button class="btn btn-outline-primary take-test" data-test-id="2">
+                                                    <i class="fas fa-play me-1"></i>Начать тест
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Тест 3 -->
+                                    <div class="col-md-4 mb-4">
+                                        <div class="collection-card h-100">
+                                            <div class="collection-header">
+                                                <h5 class="mb-1">Английский: Лексика</h5>
+                                                <p class="small mb-0">3 вопроса</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="card-text">Тест на знание лексики</p>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <span class="badge bg-light text-dark">Английский</span>
+                                                        <span class="badge bg-light text-dark">Начальный уровень</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-white text-center">
+                                                <button class="btn btn-outline-primary take-test" data-test-id="3">
+                                                    <i class="fas fa-play me-1"></i>Начать тест
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Раздел прохождения теста (скрыт по умолчанию) -->
+                <div class="row mb-4 d-none" id="testTakingSection">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0" id="testTitle">Тест</h5>
+                                <div>
+                                    <span class="badge bg-primary" id="testProgress">Вопрос 1 из 5</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="testContent">
+                                    <!-- Загрузка вопросов теста  -->
+                                </div>
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button class="btn btn-secondary" id="prevQuestionBtn" disabled>
+                                        <i class="fas fa-arrow-left me-1"></i>Назад
+                                    </button>
+                                    <button class="btn btn-primary" id="nextQuestionBtn">
+                                        Далее <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                    <button class="btn btn-success d-none" id="finishTestBtn">
+                                        <i class="fas fa-check me-1"></i>Завершить тест
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Раздел результатов теста (скрыт по умолчанию) -->
+                <div class="row mb-4 d-none" id="testResultSection">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Результаты теста</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="test-result success-result mb-4" id="testResultHeader">
+                                    <h4>Отлично!</h4>
+                                    <p class="mb-0">Вы ответили правильно на 4 из 5 вопросов (80%)</p>
+                                </div>
+                                
+                                <div class="progress mb-4" style="height: 5px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                
+                                <div id="testReview">
+                                    <!-- Результаты по вопросам  -->
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <button class="btn btn-primary me-2" id="retakeTestBtn">
+                                        <i class="fas fa-redo me-1"></i>Пройти еще раз
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="backToTestsBtn">
+                                        <i class="fas fa-arrow-left me-1"></i>Вернуться к тестам
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Добавить нового ученика -->
+    <div class="modal fade" id="addnewstudentModal" tabindex="-1" aria-labelledby="addnewstudentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="students">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Добавить нового ученика</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Имя ученика</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Класс</label>
+                            <select name="student_class" class="form-select" required>
+                                {% for i in "123456789" %}
+                                <option value="{{i}}" {% if i == "5" %}selected{% endif %}>{{i}} класс</option>
+                                {% endfor %}
+                                <option value="10">10 класс</option>
+                                <option value="11">11 класс</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Telegram</label>
+                            <input type="text" name="telegram" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Телефон</label>
+                            <input type="text" name="phone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" name="create" class="btn btn-primary">Добавить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Добавить новый урок -->
+    <div class="modal fade" id="addnewlessonModal" tabindex="-1" aria-labelledby="addnewlessonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="lessons">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Добавить новый урок</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Ученик</label>
+                            <select name="student" class="form-select" required>
+                                <option value="" selected disabled>Выберите ученика</option>
+                                {% for student in students %}
+                                <option value="{{student.id}}">{{student.name}} ({{student.get_student_class_display}})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Дата урока</label>
+                            <input type="date" name="date" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">План урока</label>
+                            <textarea name="plan" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Домашнее задание</label>
+                            <textarea name="homework" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Комментарий</label>
+                            <textarea name="comment" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" name="create_lesson" class="btn btn-primary">Добавить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Добавить новую оценку -->
+    <div class="modal fade" id="addnewgradeModal" tabindex="-1" aria-labelledby="addnewgradeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="grades">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Добавить новую оценку</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Ученик</label>
+                            <select name="student" class="form-select" id="student_select" required>
+                                <option value="" selected disabled>Выберите ученика</option>
+                                {% for student in students %}
+                                <option value="{{student.id}}">{{student.name}} ({{student.get_student_class_display}})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Урок</label>
+                            <select name="lesson" class="form-select" id="lesson_select" required>
+                                <option value="" selected disabled>Сначала выберите ученика</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Оценка</label>
+                            <select name="score" class="form-select" required>
+                                <option value="" selected disabled>Выберите оценку</option>
+                                <option value="5">5 (Отлично)</option>
+                                <option value="4">4 (Хорошо)</option>
+                                <option value="3">3 (Удовлетворительно)</option>
+                                <option value="2">2 (Неудовлетворительно)</option>
+                                <option value="1">1 (Плохо)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" name="create_grade" class="btn btn-primary">Добавить</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Данные для тестов
+        const tests = {
+            1: {
+                id: 1,
+                title: "Английский: Основы грамматики",
+                questions: [
+                    {
+                        id: 1,
+                        text: "Выберите правильный вариант: She ___ to school every day.",
+                        answers: [
+                            { id: 1, text: "go", is_correct: false },
+                            { id: 2, text: "goes", is_correct: true },
+                            { id: 3, text: "going", is_correct: false }
+                        ]
+                    },
+                    {
+                        id: 2,
+                        text: "Выберите правильный артикль: ___ apple a day keeps the doctor away.",
+                        answers: [
+                            { id: 4, text: "A", is_correct: false },
+                            { id: 5, text: "An", is_correct: true },
+                            { id: 6, text: "The", is_correct: false }
+                        ]
+                    },
+                    {
+                        id: 3,
+                        text: "Выберите правильную форму глагола: They ___ TV now.",
+                        answers: [
+                            { id: 7, text: "watch", is_correct: false },
+                            { id: 8, text: "are watching", is_correct: true },
+                            { id: 9, text: "watches", is_correct: false }
+                        ]
+                    }
+                ]
+            },
+            2: {
+                id: 2,
+                title: "Английский: Времена",
+                questions: [
+                    {
+                        id: 1,
+                        text: "Выберите правильное время: I ___ my homework yesterday.",
+                        answers: [
+                            { id: 1, text: "do", is_correct: false },
+                            { id: 2, text: "did", is_correct: true },
+                            { id: 3, text: "have done", is_correct: false }
+                        ]
+                    },
+                    {
+                        id: 2,
+                        text: "Выберите правильное время: She ___ in London since 2010.",
+                        answers: [
+                            { id: 4, text: "lives", is_correct: false },
+                            { id: 5, text: "has lived", is_correct: true },
+                            { id: 6, text: "is living", is_correct: false }
+                        ]
+                    }
+                ]
+            },
+            3: {
+                id: 3,
+                title: "Английский: Лексика",
+                questions: [
+                    {
+                        id: 1,
+                        text: "Как переводится слово 'book'?",
+                        answers: [
+                            { id: 1, text: "Ручка", is_correct: false },
+                            { id: 2, text: "Книга", is_correct: true },
+                            { id: 3, text: "Стол", is_correct: false }
+                        ]
+                    },
+                    {
+                        id: 2,
+                        text: "Как переводится слово 'house'?",
+                        answers: [
+                            { id: 4, text: "Дом", is_correct: true },
+                            { id: 5, text: "Квартира", is_correct: false },
+                            { id: 6, text: "Офис", is_correct: false }
+                        ]
+                    },
+                    {
+                        id: 3,
+                        text: "Как переводится слово 'happy'?",
+                        answers: [
+                            { id: 7, text: "Грустный", is_correct: false },
+                            { id: 8, text: "Счастливый", is_correct: true },
+                            { id: 9, text: "Злой", is_correct: false }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // Обработчики для кнопок "Начать тест"
+        document.querySelectorAll('.take-test').forEach(button => {
+            button.addEventListener('click', function() {
+                const testId = this.getAttribute('data-test-id');
+                startTest(testId);
+            });
+        });
+
+        // Функция для начала прохождения теста
+        function startTest(testId) {
+            const test = tests[testId];
+            
+            // Сохранение данных теста
+            localStorage.setItem('currentTest', JSON.stringify(test));
+            localStorage.setItem('currentQuestion', 0);
+            localStorage.setItem('userAnswers', JSON.stringify({}));
+            
+            // Раздел прохождения теста
+            document.getElementById('testTakingSection').classList.remove('d-none');
+            document.getElementById('testResultSection').classList.add('d-none');
+            
+            // Загрузка первого вопроса
+            loadQuestion(0);
+        }
+
+        // Функция для загрузки вопроса
+        function loadQuestion(questionIndex) {
+            const test = JSON.parse(localStorage.getItem('currentTest'));
+            const userAnswers = JSON.parse(localStorage.getItem('userAnswers'));
+            
+            if (questionIndex >= 0 && questionIndex < test.questions.length) {
+                const question = test.questions[questionIndex];
+                document.getElementById('testTitle').textContent = test.title;
+                document.getElementById('testProgress').textContent = `Вопрос ${questionIndex + 1} из ${test.questions.length}`;
+                
+                let answersHtml = '';
+                question.answers.forEach(answer => {
+                    const isSelected = userAnswers[question.id] === answer.id;
+                    answersHtml += `
+                        <div class="answer-item ${isSelected ? 'selected-answer' : ''}" data-answer-id="${answer.id}" data-question-id="${question.id}">
+                            ${answer.text}
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('testContent').innerHTML = `
+                    <div class="question-item mb-4">
+                        <h6>${question.text}</h6>
+                        <div class="mt-3">
+                            ${answersHtml}
+                        </div>
+                    </div>
+                `;
+                
+                // Обновление состояния кнопок навигации
+                document.getElementById('prevQuestionBtn').disabled = questionIndex === 0;
+                document.getElementById('nextQuestionBtn').classList.toggle('d-none', questionIndex === test.questions.length - 1);
+                document.getElementById('finishTestBtn').classList.toggle('d-none', questionIndex !== test.questions.length - 1);
+                
+                // Сохранение текущего вопроса
+                localStorage.setItem('currentQuestion', questionIndex);
+                
+                // Обработчики для ответов
+                document.querySelectorAll('.answer-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const questionId = parseInt(this.getAttribute('data-question-id'));
+                        const answerId = parseInt(this.getAttribute('data-answer-id'));
+                        
+                        // Удаление выделения у всех ответов этого вопроса
+                        document.querySelectorAll(`.answer-item[data-question-id="${questionId}"]`).forEach(ans => {
+                            ans.classList.remove('selected-answer');
+                        });
+                        
+                        // Добавление выделения выбранному ответу
+                        this.classList.add('selected-answer');
+                        
+                        // Сохранение ответа пользователя
+                        const userAnswers = JSON.parse(localStorage.getItem('userAnswers'));
+                        userAnswers[questionId] = answerId;
+                        localStorage.setItem('userAnswers', JSON.stringify(userAnswers));
+                    });
+                });
+            }
+        }
+
+        // Функция для завершения теста
+        function finishTest() {
+            const test = JSON.parse(localStorage.getItem('currentTest'));
+            const userAnswers = JSON.parse(localStorage.getItem('userAnswers'));
+            
+            let correctAnswers = 0;
+            test.questions.forEach(question => {
+                const userAnswerId = userAnswers[question.id];
+                if (userAnswerId) {
+                    const correctAnswer = question.answers.find(a => a.is_correct);
+                    if (correctAnswer && userAnswerId === correctAnswer.id) {
+                        correctAnswers++;
+                    }
+                }
+            });
+            
+            const score = Math.round((correctAnswers / test.questions.length) * 100);
+            let resultClass, resultText;
+            
+            if (score >= 80) {
+                resultClass = 'success-result';
+                resultText = 'Отлично!';
+            } else if (score >= 50) {
+                resultClass = 'warning-result';
+                resultText = 'Хорошо!';
+            } else {
+                resultClass = 'danger-result';
+                resultText = 'Попробуйте еще раз!';
+            }
+            
+            // Результаты
+            document.getElementById('testTakingSection').classList.add('d-none');
+            document.getElementById('testResultSection').classList.remove('d-none');
+            
+            document.getElementById('testResultHeader').className = `test-result ${resultClass}`;
+            document.getElementById('testResultHeader').innerHTML = `
+                <h4>${resultText}</h4>
+                <p class="mb-0">Вы ответили правильно на ${correctAnswers} из ${test.questions.length} вопросов (${score}%)</p>
+            `;
+            
+            document.querySelector('.progress-bar').style.width = `${score}%`;
+            
+            // Обзор вопросов
+            let reviewHtml = '';
+            test.questions.forEach((question, index) => {
+                const userAnswerId = userAnswers[question.id];
+                const userAnswer = userAnswerId ? question.answers.find(a => a.id === userAnswerId) : null;
+                const correctAnswer = question.answers.find(a => a.is_correct);
+                
+                reviewHtml += `
+                    <div class="mb-4 p-3 border rounded ${userAnswerId === correctAnswer.id ? 'border-success' : 'border-danger'}">
+                        <h6>Вопрос ${index + 1}: ${question.text}</h6>
+                        <div class="mt-2">
+                            <p class="mb-1"><strong>Ваш ответ:</strong> ${userAnswer ? userAnswer.text : 'Нет ответа'}</p>
+                            <p class="mb-0"><strong>Правильный ответ:</strong> ${correctAnswer.text}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('testReview').innerHTML = reviewHtml;
+        }
+
+        // Обработчики для кнопок навигации в тесте
+        document.getElementById('prevQuestionBtn').addEventListener('click', function() {
+            const currentQuestion = parseInt(localStorage.getItem('currentQuestion'));
+            loadQuestion(currentQuestion - 1);
+        });
+        
+        document.getElementById('nextQuestionBtn').addEventListener('click', function() {
+            const currentQuestion = parseInt(localStorage.getItem('currentQuestion'));
+            loadQuestion(currentQuestion + 1);
+        });
+        
+        document.getElementById('finishTestBtn').addEventListener('click', finishTest);
+
+        // Обработчики для кнопок в разделе результатов
+        document.getElementById('retakeTestBtn').addEventListener('click', function() {
+            const test = JSON.parse(localStorage.getItem('currentTest'));
+            startTest(test.id);
+        });
+        
+        document.getElementById('backToTestsBtn').addEventListener('click', function() {
+            document.getElementById('testResultSection').classList.add('d-none');
+            document.getElementById('testTakingSection').classList.add('d-none');
+        });
+
+
+        // Загрузка уроков для выбранного ученика
+        document.getElementById('student_select').addEventListener('change', function() {
+            const studentId = this.value;
+            const lessonSelect = document.getElementById('lesson_select');
+            
+            if (studentId) {
+                fetch(`/get_lessons/?student_id=${studentId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        lessonSelect.innerHTML = '';
+                        if (data.lessons.length > 0) {
+                            const defaultOption = document.createElement('option');
+                            defaultOption.value = '';
+                            defaultOption.textContent = 'Выберите урок';
+                            defaultOption.selected = true;
+                            defaultOption.disabled = true;
+                            lessonSelect.appendChild(defaultOption);
+                            
+                            data.lessons.forEach(lesson => {
+                                const option = document.createElement('option');
+                                option.value = lesson.id;
+                                option.textContent = lesson.date;
+                                lessonSelect.appendChild(option);
+                            });
+                        } else {
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.textContent = 'Нет доступных уроков';
+                            option.disabled = true;
+                            lessonSelect.appendChild(option);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        lessonSelect.innerHTML = '<option value="" selected disabled>Ошибка загрузки уроков</option>';
+                    });
+            } else {
+                lessonSelect.innerHTML = '<option value="" selected disabled>Сначала выберите ученика</option>';
+            }
+        });
+  
+        document.addEventListener('DOMContentLoaded', function() {
+    // Восстановление активной вкладки при загрузке
+    function restoreTab() {
+      
+        const lastActiveTab = localStorage.getItem('lastActiveTab');
+        
+        if (lastActiveTab) {
+            const tabButton = document.querySelector(`[data-bs-target="${lastActiveTab}"]`);
+            
+            if (tabButton && typeof bootstrap !== 'undefined') {
+                new bootstrap.Tab(tabButton).show();
+            } else if (tabButton) {
+             
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                document.querySelectorAll('.nav-link').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                tabButton.classList.add('active');
+                const targetPaneId = tabButton.getAttribute('data-bs-target');
+                const targetPane = document.querySelector(targetPaneId);
+                if (targetPane) {
+                    targetPane.classList.add('show', 'active');
+                }
+            }
+        } else {
+          
+            const defaultTabButton = document.querySelector('[data-bs-target="#students-tab-pane"]');
+            if (defaultTabButton && typeof bootstrap !== 'undefined') {
+                new bootstrap.Tab(defaultTabButton).show();
+            }
+        }
+    }
+
+
+    document.querySelectorAll('.nav-tabs .nav-link').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-bs-target');
+            if (tabId) {
+                localStorage.setItem('lastActiveTab', tabId);
+                console.log('Сохранена вкладка:', tabId);
+            }
+        });
+    });
+
+ 
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function() {
+            const activeTab = document.querySelector('.nav-tabs .nav-link.active');
+            if (activeTab) {
+                const tabId = activeTab.getAttribute('data-bs-target');
+                if (tabId) {
+                    const tabName = tabId.replace('#', '').replace('-tab-pane', '');
+                    
+                
+                    let input = form.querySelector('input[name="active_tab"]');
+                    if (!input) {
+                        input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'active_tab';
+                        form.appendChild(input);
+                    }
+                    input.value = tabName;
+                    console.log('Отправка формы с активной вкладкой:', tabName);
+                }
+            }
+        });
+    });
+
+
+    restoreTab();
+});
+    
+    </script>
+</body>
+</html>
